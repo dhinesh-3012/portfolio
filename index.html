@@ -306,6 +306,27 @@
     .form-input:focus, .form-textarea:focus { border-color: var(--aws); }
     .form-textarea { resize: vertical; min-height: 100px; }
 
+    /* success / error message */
+    .form-feedback {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-align: center;
+      display: none;
+    }
+    .form-feedback.success {
+      background: rgba(52,211,153,0.15);
+      border: 1px solid #34d399;
+      color: #34d399;
+    }
+    .form-feedback.error {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+
     /* FOOTER */
     footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 48px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
     .footer-logo { font-family: 'Space Mono', monospace; color: var(--aws); font-size: 0.95rem; }
@@ -467,14 +488,39 @@
   </div>
 </section>
 
-<!-- CONTACT SECTION -->
+<!-- CONTACT SECTION with Formspree integration -->
 <section id="contact">
   <div class="section-inner">
     <p class="section-label">06 — Contact</p>
     <h2 class="section-title">Let's <span>Connect</span></h2>
     <div class="contact-wrapper">
       <div class="reveal"><p class="contact-text">I'm actively looking for fresher-level roles in AWS Cloud Support. If you have an opportunity, a question, or just want to say hello — I'd love to hear from you.</p><div class="contact-cards"><a href="mailto:mdhinesh089@gmail.com" class="contact-card"><div class="contact-card-icon" style="background:rgba(255,153,0,0.12);color:var(--aws);"><i class="fas fa-envelope"></i></div><div><div class="contact-card-label">Email</div><div class="contact-card-val">mdhinesh089@gmail.com</div></div></a><a href="https://www.linkedin.com/in/dhinesh-m-522bb234b" target="_blank" class="contact-card"><div class="contact-card-icon" style="background:rgba(56,189,248,0.1);color:var(--blue);"><i class="fab fa-linkedin"></i></div><div><div class="contact-card-label">LinkedIn</div><div class="contact-card-val">dhinesh-m-522bb234b</div></div></a><a href="https://github.com/dhinesh-3012" target="_blank" class="contact-card"><div class="contact-card-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;"><i class="fab fa-github"></i></div><div><div class="contact-card-label">GitHub</div><div class="contact-card-val">github.com/dhinesh-3012</div></div></a><div class="contact-card"><div class="contact-card-icon" style="background:rgba(52,211,153,0.1);color:#34d399;"><i class="fas fa-phone"></i></div><div><div class="contact-card-label">Phone</div><div class="contact-card-val">+91 63825 35029</div></div></div></div></div>
-      <div class="contact-form reveal reveal-delay-1"><div class="form-row"><div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" placeholder="Your name"/></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="your@email.com"/></div></div><div class="form-group"><label class="form-label">Subject</label><input class="form-input" type="text" placeholder="Job opportunity / Collaboration"/></div><div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" placeholder="Your message..."></textarea></div><button class="btn-aws" style="width:100%;justify-content:center;padding:14px;" onclick="alert('To activate this form, connect it to Formspree or EmailJS!')"><i class="fas fa-paper-plane"></i> Send Message</button></div>
+      
+      <!-- Formspree form: action points to the provided endpoint -->
+      <div class="contact-form reveal reveal-delay-1">
+        <form id="contactForm" action="https://formspree.io/f/mjgpzzpz" method="POST">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Name</label>
+              <input class="form-input" type="text" name="name" placeholder="Your name" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-input" type="email" name="email" placeholder="your@email.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject</label>
+            <input class="form-input" type="text" name="subject" placeholder="Job opportunity / Collaboration" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-textarea" name="message" placeholder="Your message..." required></textarea>
+          </div>
+          <button type="submit" class="btn-aws" style="width:100%;justify-content:center;padding:14px;"><i class="fas fa-paper-plane"></i> Send Message</button>
+          <div id="formFeedback" class="form-feedback"></div>
+        </form>
+      </div>
     </div>
   </div>
 </section>
@@ -499,6 +545,39 @@
     setTimeout(type, del ? 38 : 68);
   }
   type();
+
+  // Formspree AJAX handling (optional: to show feedback without leaving page)
+  const contactForm = document.getElementById('contactForm');
+  const feedbackDiv = document.getElementById('formFeedback');
+  if (contactForm) {
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(contactForm);
+      feedbackDiv.style.display = 'block';
+      feedbackDiv.className = 'form-feedback';
+      feedbackDiv.textContent = 'Sending...';
+      try {
+        const response = await fetch(contactForm.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          feedbackDiv.classList.add('success');
+          feedbackDiv.textContent = '✅ Message sent successfully! I’ll get back to you soon.';
+          contactForm.reset();
+          setTimeout(() => { feedbackDiv.style.display = 'none'; }, 5000);
+        } else {
+          const errorData = await response.json();
+          feedbackDiv.classList.add('error');
+          feedbackDiv.textContent = errorData.error || '❌ Something went wrong. Please try again.';
+        }
+      } catch (err) {
+        feedbackDiv.classList.add('error');
+        feedbackDiv.textContent = '❌ Network error. Please check your connection.';
+      }
+    });
+  }
 </script>
 </body>
 </html>
